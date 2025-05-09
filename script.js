@@ -3,6 +3,12 @@ const messagesContainer = document.getElementById('messages');
 const messageInput = document.getElementById('message-input');
 const sendButton = document.getElementById('send-button');
 
+// Add dark mode toggle functionality
+const darkModeToggle = document.createElement('button');
+darkModeToggle.id = 'dark-mode-toggle';
+darkModeToggle.textContent = 'Toggle Dark Mode';
+document.body.prepend(darkModeToggle);
+
 // Load messages from localStorage
 function loadMessages() {
     const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
@@ -34,6 +40,26 @@ function sendMessage() {
         messageInput.value = ''; // Clear input
     }
 }
+
+// Apply the saved theme on load
+function applyTheme(theme) {
+    document.body.className = theme;
+    darkModeToggle.textContent = theme === 'dark' ? 'Switch to Light Mode' : 'Switch to Dark Mode';
+}
+
+// Toggle between light and dark mode
+function toggleDarkMode() {
+    const currentTheme = document.body.className === 'dark' ? 'light' : 'dark';
+    localStorage.setItem('theme', currentTheme);
+    applyTheme(currentTheme);
+}
+
+// Load the saved theme from localStorage
+const savedTheme = localStorage.getItem('theme') || 'light';
+applyTheme(savedTheme);
+
+// Event listener for the dark mode toggle button
+darkModeToggle.addEventListener('click', toggleDarkMode);
 
 // Event listeners
 sendButton.addEventListener('click', sendMessage);
