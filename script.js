@@ -9,17 +9,17 @@ darkModeToggle.id = 'dark-mode-toggle';
 darkModeToggle.textContent = 'Toggle Dark Mode';
 document.body.prepend(darkModeToggle);
 
-// Load messages from localStorage
+// Load messages from the URL hash
 function loadMessages() {
-    const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+    const hash = decodeURIComponent(window.location.hash.slice(1));
+    const messages = hash ? JSON.parse(hash) : [];
+    messagesContainer.innerHTML = ''; // Clear existing messages
     messages.forEach(displayMessage);
 }
 
-// Save a message to localStorage
-function saveMessage(message) {
-    const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
-    messages.push(message);
-    localStorage.setItem('chatMessages', JSON.stringify(messages));
+// Save messages to the URL hash
+function saveMessages(messages) {
+    window.location.hash = encodeURIComponent(JSON.stringify(messages));
 }
 
 // Display a message in the chat box
@@ -35,8 +35,11 @@ function displayMessage(message) {
 function sendMessage() {
     const message = messageInput.value.trim();
     if (message) {
+        const hash = decodeURIComponent(window.location.hash.slice(1));
+        const messages = hash ? JSON.parse(hash) : [];
+        messages.push(message);
+        saveMessages(messages);
         displayMessage(message);
-        saveMessage(message);
         messageInput.value = ''; // Clear input
     }
 }
@@ -67,5 +70,12 @@ messageInput.addEventListener('keypress', (e) => {
     if (e.key === 'Enter') sendMessage();
 });
 
+// Poll for new messages every 1 second
+function pollMessages() {
+    loadMessages();
+    setTimeout(pollMessages, 1000);
+}
+
 // Initialize chat
 loadMessages();
+pollMessages();
