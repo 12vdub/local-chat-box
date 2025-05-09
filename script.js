@@ -9,17 +9,18 @@ darkModeToggle.id = 'dark-mode-toggle';
 darkModeToggle.textContent = 'Toggle Dark Mode';
 document.body.prepend(darkModeToggle);
 
-// Load messages from the URL hash
+// Load messages from localStorage
 function loadMessages() {
-    const hash = decodeURIComponent(window.location.hash.slice(1));
-    const messages = hash ? JSON.parse(hash) : [];
+    const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
     messagesContainer.innerHTML = ''; // Clear existing messages
     messages.forEach(displayMessage);
 }
 
-// Save messages to the URL hash
-function saveMessages(messages) {
-    window.location.hash = encodeURIComponent(JSON.stringify(messages));
+// Save a message to localStorage
+function saveMessage(message) {
+    const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+    messages.push(message);
+    localStorage.setItem('chatMessages', JSON.stringify(messages));
 }
 
 // Display a message in the chat box
@@ -31,15 +32,30 @@ function displayMessage(message) {
     messagesContainer.scrollTop = messagesContainer.scrollHeight; // Auto-scroll
 }
 
+// Sync the latest message using the URL hash
+function syncLatestMessage() {
+    const hash = decodeURIComponent(window.location.hash.slice(1));
+    if (hash) {
+        const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+        if (!messages.includes(hash)) {
+            messages.push(hash); // Add the new message to localStorage
+            localStorage.setItem('chatMessages', JSON.stringify(messages));
+            displayMessage(hash); // Display the new message
+        }
+    }
+}
+
 // Handle sending a message
 function sendMessage() {
-    const message = messageInput.value.trim();
-    if (message) {
-        const hash = decodeURIComponent(window.location.hash.slice(1));
-        const messages = hash ? JSON.parse(hash) : [];
+    const username = document.getElementById('username-input').value.trim() || 'Anonymous';
+    const messageText = messageInput.value.trim();
+    if (messageText) {
+        const message = `${username}: ${messageText}`;
+        const messages = JSON.parse(localStorage.getItem('chatMessages')) || [];
         messages.push(message);
-        saveMessages(messages);
+        localStorage.setItem('chatMessages', JSON.stringify(messages));
         displayMessage(message);
+        window.location.hash = encodeURIComponent(message); // Update the hash with the latest message
         messageInput.value = ''; // Clear input
     }
 }
@@ -72,7 +88,11 @@ messageInput.addEventListener('keypress', (e) => {
 
 // Poll for new messages every 1 second
 function pollMessages() {
-    loadMessages();
+    syncLatestMessage(); // Check for new messages in the hash
+    const currentMessages = JSON.parse(localStorage.getItem('chatMessages')) || [];
+    if (messagesContainer.childElementCount !== currentMessages.length) {
+        loadMessages(); // Reload messages if there are new ones
+    }
     setTimeout(pollMessages, 1000);
 }
 
